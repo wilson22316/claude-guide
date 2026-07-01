@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code — 完整指南 & Meetup 筆記</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── CLAUDE LIGHT MODE (預設) ── */
+  :root {
+    /* 背景層次：claude.ai 的米白/暖灰系 */
+    --bg:   #f9f8f5;   /* 最底層，頁面背景，帶點暖調 */
+    --bg2:  #ffffff;   /* 卡片、面板 */
+    --bg3:  #f2f1ed;   /* 表頭、凹陷區域 */
+
+    /* 邊框 */
+    --border:  rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+
+    /* 文字 */
+    --text:  #1a1915;   /* 主文字，近黑但帶暖調 */
+    --text2: #6b6860;   /* 次要文字 */
+    --text3: #a09e98;   /* 提示、輔助文字 */
+
+    /* Accent：claude.ai 的 terracotta/coral 主色 + 輔助色 */
+    --accent:  #da7756;   /* Claude 橘紅主色 */
+    --accent2: #1a6b9a;   /* 連結藍 */
+    --accent3: #b87333;   /* 暖橙 */
+    --accent4: #c0392b;   /* 危險紅 */
+
+    /* nav 背景（半透明） */
+    --nav-bg: rgba(249,248,245,0.92);
+
+    /* 代碼區 */
+    --code-bg:   #f2f1ed;
+    --code-text: #c0392b;
+
+    /* active tab 文字用白 */
+    --tab-active-text: #ffffff;
+
+    /* quote 背景 */
+    --quote-bg: rgba(218,119,86,0.05);
+
+    /* tip 背景 */
+    --tip-bg:     rgba(26,107,154,0.06);
+    --tip-border: rgba(26,107,154,0.18);
+
+    --mono: 'Space Mono', monospace;
+    --sans: 'Noto Sans TC', sans-serif;
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  /* ── CLAUDE DARK MODE ── */
+  html.dark {
+    /* 背景：claude.ai dark 的深棕近黑 */
+    --bg:   #1c1917;   /* 頁面底層，帶暖棕 */
+    --bg2:  #262420;   /* 卡片、面板 */
+    --bg3:  #2e2b27;   /* 表頭、凹陷 */
+
+    --border:  rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+
+    --text:  #f0ede6;   /* 暖白 */
+    --text2: #a09d96;   /* 次要 */
+    --text3: #625f59;   /* 輔助 */
+
+    --accent:  #e8835f;   /* 深色模式下的 Claude 橘紅，稍亮 */
+    --accent2: #5ba8d8;   /* 連結藍 */
+    --accent3: #d4913a;   /* 暖橙 */
+    --accent4: #e05c5c;   /* 危險紅 */
+
+    --nav-bg: rgba(28,25,23,0.92);
+
+    --code-bg:   #2e2b27;
+    --code-text: #e8835f;
+
+    --tab-active-text: #1c1917;
+
+    --quote-bg: rgba(232,131,95,0.07);
+
+    --tip-bg:     rgba(91,168,216,0.08);
+    --tip-border: rgba(91,168,216,0.2);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.75;
+    min-height: 100vh;
+    transition: background 0.25s, color 0.25s;
+  }
+
+  /* ── 主題切換按鈕 ── */
+  .theme-toggle {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 99px; padding: 4px 6px; cursor: pointer;
+    flex-shrink: 0; margin-left: 12px;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .theme-toggle:hover { border-color: var(--accent); }
+  .theme-seg {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 22px; border-radius: 99px;
+    font-size: 12px; cursor: pointer; transition: background 0.2s;
+    color: var(--text3);
+  }
+  .theme-seg.active {
+    background: var(--bg2);
+    color: var(--accent);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0;
+    height: 56px; padding: 0 16px 0 24px;
+    transition: background 0.25s;
+  }
+  .nav-logo {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.08em; margin-right: 24px;
+    text-decoration: none; white-space: nowrap;
+  }
+  .nav-tabs {
+    display: flex; gap: 2px; overflow-x: auto;
+    scrollbar-width: none; flex: 1;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: var(--sans); font-size: 13px;
+    color: var(--text2); padding: 6px 13px; border-radius: 6px;
+    white-space: nowrap; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--bg3); }
+  .tab-btn.active { color: var(--tab-active-text); background: var(--accent); font-weight: 500; }
+  .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+
+  /* LAYOUT */
+  .main { padding-top: 56px; min-height: 100vh; }
+  .section { display: none; padding: 40px 24px; max-width: 900px; margin: 0 auto; }
+  .section.active { display: block; }
+
+  /* HERO */
+  .hero {
+    padding: 60px 0 48px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .hero-label {
+    font-family: var(--mono); font-size: 11px; color: var(--accent);
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 44px); font-weight: 300;
+    line-height: 1.2; color: var(--text);
+    margin-bottom: 16px;
+  }
+  .hero h1 em { color: var(--accent); font-style: normal; font-weight: 700; }
+  .hero p { color: var(--text2); font-size: 16px; max-width: 560px; }
+
+  /* CARDS */
+  .card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border2); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+
+  /* TABLE */
+  .styled-table {
+    width: 100%; border-collapse: collapse; font-size: 14px;
+    background: var(--bg2); border-radius: var(--radius-lg); overflow: hidden;
+  }
+  .styled-table th {
+    text-align: left; padding: 12px 16px; font-size: 11px;
+    font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text3); border-bottom: 1px solid var(--border); font-weight: 400;
+    background: var(--bg3);
+  }
+  .styled-table td {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    color: var(--text2); vertical-align: top;
+  }
+  .styled-table tr:last-child td { border-bottom: none; }
+  .styled-table td:first-child { color: var(--text); font-weight: 500; }
+  .styled-table tr:hover td { background: var(--bg3); }
+
+  /* TAG / BADGE */
+  .badge {
+    display: inline-block; font-family: var(--mono); font-size: 10px;
+    padding: 2px 8px; border-radius: 4px; letter-spacing: 0.06em;
+    text-transform: uppercase; font-weight: 700;
+  }
+  .badge-green  { background: rgba(218,119,86,0.12);  color: var(--accent); }
+  .badge-blue   { background: rgba(26,107,154,0.1);   color: var(--accent2); }
+  .badge-orange { background: rgba(184,115,51,0.12);  color: var(--accent3); }
+  .badge-red    { background: rgba(192,57,43,0.1);    color: var(--accent4); }
+  html.dark .badge-green  { background: rgba(232,131,95,0.15); }
+  html.dark .badge-blue   { background: rgba(91,168,216,0.15); }
+  html.dark .badge-orange { background: rgba(212,145,58,0.15); }
+  html.dark .badge-red    { background: rgba(224,92,92,0.15);  }
+
+  /* HEADINGS */
+  h2 { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 20px; }
+  h3 { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+  .section-label {
+    font-family: var(--mono); font-size: 10px; color: var(--text3);
+    letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px;
+    font-family: var(--mono); font-size: 13px; color: var(--code-text);
+    overflow-x: auto; white-space: pre; margin: 12px 0;
+  }
+
+  /* QUOTE */
+  .quote {
+    border-left: 3px solid var(--accent);
+    padding: 12px 20px; margin: 20px 0;
+    background: var(--quote-bg);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .quote p { color: var(--text2); font-size: 14px; font-style: italic; }
+  .quote .attr { font-size: 12px; color: var(--text3); margin-top: 6px; font-style: normal; font-family: var(--mono); }
+
+  /* LEVEL PROGRESSION */
+  .level-track { position: relative; padding-left: 32px; }
+  .level-track::before {
+    content: ''; position: absolute; left: 11px; top: 20px; bottom: 0;
+    width: 2px; background: var(--border);
+  }
+  .level-item {
+    position: relative; margin-bottom: 24px;
+  }
+  .level-dot {
+    position: absolute; left: -32px; top: 4px;
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    border: 1px solid var(--border); background: var(--bg2);
+    color: var(--text3);
+  }
+  .level-item.reached .level-dot {
+    background: var(--accent); color: var(--bg); border-color: var(--accent);
+  }
+  .level-item.partial .level-dot {
+    background: var(--accent3); color: var(--bg); border-color: var(--accent3);
+  }
+  .level-title { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .level-desc { font-size: 13px; color: var(--text2); }
+  .level-tag {
+    display: inline-block; margin-top: 6px; font-size: 11px;
+    font-family: var(--mono); color: var(--text3);
+  }
+  .level-item.reached .level-tag { color: var(--accent); }
+  .level-item.partial .level-tag { color: var(--accent3); }
+
+  /* TIPS */
+  .tip {
+    background: var(--tip-bg); border: 1px solid var(--tip-border);
+    border-radius: var(--radius); padding: 14px 18px; margin: 16px 0;
+    font-size: 14px; color: var(--text2);
+  }
+  .tip strong { color: var(--accent2); font-weight: 500; }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: 14px; color: var(--text2); cursor: pointer;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .check-box {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 2px;
+    transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+  }
+  .checklist li.done .check-box {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .checklist li.done .check-box::after { content: '✓'; font-size: 10px; color: var(--bg); font-weight: 700; }
+  .checklist li.done span { text-decoration: line-through; color: var(--text3); }
+
+  /* STAT */
+  .stat-row { display: flex; gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px; text-align: center;
+  }
+  .stat-num { font-size: 28px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+  .stat-label { font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+  /* SPEAKER */
+  .speaker-card {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 16px;
+  }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 16px; font-weight: 700;
+  }
+  .avatar-green { background: rgba(218,119,86,0.12); color: var(--accent); }
+  .avatar-blue { background: rgba(26,107,154,0.1); color: var(--accent2); }
+  html.dark .avatar-green { background: rgba(232,131,95,0.18); }
+  html.dark .avatar-blue  { background: rgba(91,168,216,0.18); }
+
+  /* COMMAND TABLE */
+  .cmd {
+    font-family: var(--mono); font-size: 12px; color: var(--accent2);
+    background: var(--tip-bg); border: 1px solid var(--tip-border);
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  }
+
+  /* ARCH DIAGRAM */
+  .arch {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden; margin: 20px 0;
+  }
+  .arch-layer {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px;
+  }
+  .arch-layer:last-child { border-bottom: none; }
+  .arch-num {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    width: 28px; height: 28px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .arch-content { flex: 1; }
+  .arch-title { font-size: 13px; font-weight: 700; }
+  .arch-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    .stat-row { flex-wrap: wrap; }
+    .stat-card { min-width: calc(50% - 8px); }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">$ claude</a>
+  <div class="nav-tabs" id="navTabs">
+    <button class="tab-btn active" onclick="showSection('intro', this)">前言 & 概念</button>
+    <button class="tab-btn" onclick="showSection('setup', this)">安裝 & 操作</button>
+    <button class="tab-btn" onclick="showSection('claude-md', this)">CLAUDE.md</button>
+    <button class="tab-btn" onclick="showSection('prompts', this)">提示詞技巧</button>
+    <button class="tab-btn" onclick="showSection('advanced', this)">進階功能</button>
+    <button class="tab-btn" onclick="showSection('meetup', this)">Meetup 筆記</button>
+    <button class="tab-btn" onclick="showSection('checklist', this)">✓ 實踐清單</button>
+  </div>
+  <div class="theme-toggle" id="themeToggle">
+    <div class="theme-seg active" id="seg-light" onclick="setTheme('light')" title="淺色模式">☀</div>
+    <div class="theme-seg" id="seg-dark" onclick="setTheme('dark')" title="深色模式">☽</div>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ==================== INTRO ==================== -->
+<section class="section active" id="intro">
+  <div class="hero">
+    <div class="hero-label">Claude Code — 完整指南 v2025</div>
+    <h1>從 Prompt 到 <em>Agent</em><br>AI 協作完整指南</h1>
+    <p>整合入門教學與 Taipei Meetup 實戰經驗，帶你從基礎操作到多 Agent 架構。</p>
+  </div>
+
+  <div class="section-label">AI 協作演進</div>
+  <div class="level-track" style="margin-bottom: 36px;">
+    <div class="level-item reached">
+      <div class="level-dot">23</div>
+      <div class="level-title">2023 — Prompt Engineering</div>
+      <div class="level-desc">ChatGPT 帶動 AI 寫程式風潮，開發者學習撰寫好的 prompt。</div>
+      <div class="level-tag">▲ 生成式 AI 元年</div>
+    </div>
+    <div class="level-item reached">
+      <div class="level-dot">24</div>
+      <div class="level-title">2024 — Context Engineering</div>
+      <div class="level-desc">GitHub Copilot 讓 AI 成為日常副駕駛，AI 與你協作程式碼。</div>
+      <div class="level-tag">▲ AI 協作時代</div>
+    </div>
+    <div class="level-item partial">
+      <div class="level-dot">25</div>
+      <div class="level-title">2025 — Harness Engineering</div>
+      <div class="level-desc">Claude Code 等 AI Agent 自主讀取檔案、執行指令、規劃步驟。開發者從「逐行指揮」轉變為「設定目標、審閱成果」。</div>
+      <div class="level-tag">▲ Agent 元年</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">核心名詞</div>
+  <h2>基礎概念</h2>
+  <table class="styled-table" style="margin-bottom: 36px;">
+    <thead><tr><th>名詞</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>Session（對話）</td><td>一次與 Claude Code 的互動過程。每個 session 各自獨立，擁有自己的對話歷史。可命名方便日後恢復。</td></tr>
+      <tr><td>Context Window</td><td>Claude 在單次對話中能「記住」的資訊量上限。超出範圍的早期內容會被壓縮或捨棄，適時使用 /clear。</td></tr>
+      <tr><td>Prompt（提示詞）</td><td>你輸入給 Claude 的文字指令。好的 prompt 能讓 AI 更精準理解你的意圖，減少來回修正。</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">模型選擇</div>
+  <h2>三種模型</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div style="margin-bottom: 12px;"><span class="badge badge-green">最快 / 最省</span></div>
+      <h3>Haiku</h3>
+      <p style="color: var(--text2); font-size: 14px;">簡單任務或詳細的 prompt 步驟。速度優先，成本最低。</p>
+    </div>
+    <div class="card" style="border-color: var(--accent); position: relative; overflow: hidden;">
+      <div style="position: absolute; top: 0; right: 0; background: var(--accent); color: var(--bg); font-family: var(--mono); font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 0 0 0 8px;">推薦</div>
+      <div style="margin-bottom: 12px;"><span class="badge badge-orange">速度 × 能力</span></div>
+      <h3>Sonnet</h3>
+      <p style="color: var(--text2); font-size: 14px;">日常開發首選，適合大多數任務。平衡速度與推理能力。</p>
+    </div>
+    <div class="card">
+      <div style="margin-bottom: 12px;"><span class="badge badge-blue">最強推理</span></div>
+      <h3>Opus</h3>
+      <p style="color: var(--text2); font-size: 14px;">複雜跨檔案開發、困難 debug、多步驟任務。支援調整 effort 思考深度。</p>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top: 24px;">
+    <strong>Context 容量：</strong>訂閱制為 200K tokens，使用付費 API 則可達 1M tokens。
+  </div>
+
+  <div class="quote" style="margin-top: 24px;">
+    <p>可讀性不只是為了人類與未來的自己——也是為了讓 LLM 能更好地閱讀與理解你的程式碼。</p>
+  </div>
+</section>
+
+<!-- ==================== SETUP ==================== -->
+<section class="section" id="setup">
+  <div class="hero">
+    <div class="hero-label">Chapter 02</div>
+    <h1>安裝 & <em>基本操作</em></h1>
+    <p>從啟動到常用指令，快速上手 Claude Code 的日常開發流程。</p>
+  </div>
+
+  <div class="section-label">啟動</div>
+  <h2>安裝與啟動</h2>
+  <div class="code-block">cd your-project     # 確認進入正確的專案目錄
+claude              # 啟動 Claude Code</div>
+  <div class="tip">
+    <strong>注意：</strong>Claude Code 以當前目錄作為工作範圍，影響它讀取檔案和理解專案結構的能力。啟動前請先 <code style="color: var(--accent2);">pwd</code> 確認位置。
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">輸入技巧</div>
+  <h2>輸入方式</h2>
+  <table class="styled-table" style="margin-bottom: 36px;">
+    <thead><tr><th>操作</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>直接打字 + Enter</td><td>送出訊息給 Claude</td></tr>
+      <tr><td>Option + Enter（Mac）</td><td>換行（多行輸入），適合撰寫較長的指令</td></tr>
+      <tr><td>@檔案路徑</td><td>引用檔案作為上下文，支援自動補全</td></tr>
+      <tr><td>! 開頭</td><td>直接執行 Bash 指令，執行結果會留在 context 中</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">操作模式</div>
+  <h2>三種模式 — Shift+Tab 切換</h2>
+  <div class="card-grid" style="margin-bottom: 36px;">
+    <div class="card">
+      <div style="margin-bottom: 8px;"><span class="badge badge-green">預設</span></div>
+      <h3>Normal</h3>
+      <p style="color: var(--text2); font-size: 14px;">每個檔案編輯與指令執行都需要手動確認。最謹慎。</p>
+    </div>
+    <div class="card">
+      <div style="margin-bottom: 8px;"><span class="badge badge-orange">推薦</span></div>
+      <h3>Plan Mode</h3>
+      <p style="color: var(--text2); font-size: 14px;">Claude 先規劃步驟，確認後才執行。複雜任務必用，可搭配手動或自動同意。</p>
+    </div>
+    <div class="card">
+      <div style="margin-bottom: 8px;"><span class="badge badge-blue">快速</span></div>
+      <h3>Auto-Accept</h3>
+      <p style="color: var(--text2); font-size: 14px;">自動接受檔案編輯，終端機指令仍需手動確認。搭配 VS Code diff 使用更安心。</p>
+    </div>
+  </div>
+
+  <div class="section-label">常用指令</div>
+  <h2>指令速查</h2>
+  <table class="styled-table">
+    <thead><tr><th>分類</th><th>指令</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td>對話管理</td><td><span class="cmd">/clear</span></td><td>清除當前對話歷史</td></tr>
+      <tr><td></td><td><span class="cmd">/compact</span></td><td>壓縮對話內容</td></tr>
+      <tr><td></td><td><span class="cmd">/resume [session]</span></td><td>恢復先前對話</td></tr>
+      <tr><td></td><td><span class="cmd">/rename &lt;名稱&gt;</span></td><td>為 session 命名</td></tr>
+      <tr><td></td><td><span class="cmd">/rewind</span></td><td>撤銷最近一次變更</td></tr>
+      <tr><td>設定切換</td><td><span class="cmd">/model</span></td><td>切換模型或調整思考深度</td></tr>
+      <tr><td></td><td><span class="cmd">/sandbox</span></td><td>開啟沙箱模式</td></tr>
+      <tr><td></td><td><span class="cmd">/ide</span></td><td>管理 IDE 連線（VS Code 整合）</td></tr>
+      <tr><td>專案工具</td><td><span class="cmd">/init</span></td><td>初始化，自動產生 CLAUDE.md</td></tr>
+      <tr><td></td><td><span class="cmd">/commit</span></td><td>建立 git commit（自訂 Skill）</td></tr>
+      <tr><td></td><td><span class="cmd">/doctor</span></td><td>檢查安裝狀態或查看版本</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ==================== CLAUDE.MD ==================== -->
+<section class="section" id="claude-md">
+  <div class="hero">
+    <div class="hero-label">Chapter 03</div>
+    <h1><em>CLAUDE.md</em><br>專案記憶</h1>
+    <p>Claude Code 每次啟動都會自動讀取的 Markdown 檔案——給 AI 看的 README。</p>
+  </div>
+
+  <div class="section-label">放置位置</div>
+  <h2>三種層級</h2>
+  <table class="styled-table" style="margin-bottom: 36px;">
+    <thead><tr><th>路徑</th><th>用途</th><th>Git 追蹤</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="cmd">./CLAUDE.md</span></td>
+        <td>專案層級，與團隊共用</td>
+        <td><span class="badge badge-green">是</span></td>
+      </tr>
+      <tr>
+        <td><span class="cmd">./.claude/CLAUDE.local.md</span></td>
+        <td>個人專用的專案設定</td>
+        <td><span class="badge badge-red">否（自動 gitignore）</span></td>
+      </tr>
+      <tr>
+        <td><span class="cmd">~/.claude/CLAUDE.md</span></td>
+        <td>全域設定，所有專案共用</td>
+        <td>不適用</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <div class="section-label">管理策略 — Meetup 重點</div>
+  <h2>兩派哲學</h2>
+  <div class="card-grid" style="margin-bottom: 24px;">
+    <div class="card">
+      <div style="margin-bottom: 8px;"><span class="badge badge-blue">Boris Cherny 派</span></div>
+      <h3>持續迭代累積</h3>
+      <ul style="color: var(--text2); font-size: 14px; padding-left: 18px; line-height: 2;">
+        <li>CLAUDE.md 約 2,500 tokens</li>
+        <li>遇到問題就加進去</li>
+        <li>搭配 Verifier 驗證</li>
+        <li>適合：成熟產品、持續改進</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div style="margin-bottom: 8px;"><span class="badge badge-orange">RPI 學派</span></div>
+      <h3>早期優化精簡</h3>
+      <ul style="color: var(--text2); font-size: 14px; padding-left: 18px; line-height: 2;">
+        <li>60 行以內</li>
+        <li>避免冗余，保持乾淨</li>
+        <li>核心理念：早期優化</li>
+        <li>適合：初期探索階段</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quote">
+    <p>每次 Claude 做錯了什麼，就把它加進 CLAUDE.md，讓它永遠不再重蹈覆轍。</p>
+    <div class="attr">— Boris Cherny（Claude Code 創作者）</div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">何時拆分</div>
+  <h2>3 個移出信號</h2>
+  <div class="level-track">
+    <div class="level-item reached">
+      <div class="level-dot">1</div>
+      <div class="level-title">檔案大小達臨界</div>
+      <div class="level-desc">約 50 行時開始考慮拆分，識別可獨立的規則。</div>
+    </div>
+    <div class="level-item reached">
+      <div class="level-dot">2</div>
+      <div class="level-title">Rule 遵守率下降</div>
+      <div class="level-desc">Claude 不再持續遵守某條規則，升級為 Hook / Skill / Agent。</div>
+    </div>
+    <div class="level-item reached">
+      <div class="level-dot">3</div>
+      <div class="level-title">定期審查時間</div>
+      <div class="level-desc">建議每週例行檢查，評估規則成熟度。</div>
+    </div>
+  </div>
+
+  <div class="tip" style="margin-top: 24px;">
+    <strong>效能上限：</strong>當 context window 超過 40% 被佔用時效能下降（「笨蛋區」）。理論上限約 100 條規則，包含 Claude Code 自身的 50 條 system prompt。
+  </div>
+
+  <div class="code-block"># CLAUDE.md 漸進設計流程
+遇到問題 → 加入 CLAUDE.md → Claude 不遵守 → 升級為 Hook/Skill/Agent</div>
+</section>
+
+<!-- ==================== PROMPTS ==================== -->
+<section class="section" id="prompts">
+  <div class="hero">
+    <div class="hero-label">Chapter 04</div>
+    <h1>提示詞<em>實戰技巧</em></h1>
+    <p>好的提示詞能大幅提升 AI 協作效率。依情境分類的常用策略。</p>
+  </div>
+
+  <div class="section-label">6.1 需求描述</div>
+  <h2>明確功能需求</h2>
+  <div class="code-block">請參考 @xxx 檔案，幫我實作 A 功能</div>
+  <div style="margin-top: 16px;">
+  <h3>跨檔案複雜需求</h3>
+  <div class="code-block">@/xxx 是 API 的資料回應，現在在 @/頁面 的 XX 下拉式選單...
+期望可以做到……
+
+@/OOO 是欄位的相關檔案
+
+你可能需要知道的 context 是 @OOO @BBB @AAA
+幫我分析此次需求，對於需求有疑問的部分請使用 AskUserQuestion 工具</div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">6.2 引導式對話</div>
+  <h2>先建立共識，再動手</h2>
+  <div class="level-track" style="margin-bottom: 24px;">
+    <div class="level-item reached">
+      <div class="level-dot">1</div>
+      <div class="level-title">載入 context</div>
+      <div class="level-desc">「你有看到 XXX 功能嗎？這個是 xxx」</div>
+    </div>
+    <div class="level-item reached">
+      <div class="level-dot">2</div>
+      <div class="level-title">確認理解</div>
+      <div class="level-desc">「先不要做，先回答你目前理解的需求是什麼？」</div>
+    </div>
+    <div class="level-item reached">
+      <div class="level-dot">3</div>
+      <div class="level-title">分階段追問</div>
+      <div class="level-desc">針對某些部分追問更詳細的實作細節，對齊後再開始執行。</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">6.3 範圍控制</div>
+  <h2>避免一次做太多</h2>
+  <div class="code-block">我預計先做某某功能，針對某某部分先不要做，先用 TODO 標記</div>
+  <div class="tip" style="margin-top: 12px;">
+    <strong>大檔案策略：</strong>需求變動頻繁時，先將功能集中在一個大檔案開發，等需求穩定後再拆分模組。過早拆分反而增加維護成本。
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">6.4 Debug 協作</div>
+  <h2>一起縮小排查範圍</h2>
+  <div class="code-block">我跟你一起 debug，幫我在相關的地方添加 console.log
+
+我遇到了 XX 問題，你覺得可能的原因有哪些？幫我加 log 驗證</div>
+
+  <hr class="divider">
+
+  <div class="section-label">6.5 & 6.6</div>
+  <h2>方案比較 & 驗證回答</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>比較方案</h3>
+      <div class="code-block" style="margin-top: 10px; font-size: 12px;">請提出不同方案，分析各自的優缺點
+
+請給我五種命名</div>
+    </div>
+    <div class="card">
+      <h3>驗證 AI 回答</h3>
+      <div class="code-block" style="margin-top: 10px; font-size: 12px;">真的嗎？請用 web search 搜尋官方文件
+
+親自去官方文件比對一下</div>
+      <p style="color: var(--text2); font-size: 13px; margin-top: 10px;">AI 有時會 hallucination，涉及第三方套件 API 用法時務必對照官方文件。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ADVANCED ==================== -->
+<section class="section" id="advanced">
+  <div class="hero">
+    <div class="hero-label">Chapter 05 </div>
+    <h1>進階功能</h1>
+    <p>MCP、Plugin、Skill、Agent、Git Worktree — 擴充 Claude Code 能力的完整工具箱。</p>
+  </div>
+
+  <div class="section-label">MCP</div>
+  <h2>Model Context Protocol</h2>
+  <p style="color: var(--text2); font-size: 14px; margin-bottom: 20px;">擴充 Claude Code 能力的外掛協議，透過第三方工具提供額外的上下文來源與操作能力。</p>
+  <table class="styled-table" style="margin-bottom: 24px;">
+    <thead><tr><th>工具</th><th>說明</th><th>使用範例</th></tr></thead>
+    <tbody>
+      <tr><td>Context7</td><td>查詢元件 props、API 文件等技術文檔</td><td><span class="cmd">請用 context7 查詢某某 props</span></td></tr>
+      <tr><td>DeepWiki</td><td>查詢 GitHub 開源專案的文件與架構</td><td><span class="cmd">請用 deepwiki 查詢某套件</span></td></tr>
+      <tr><td>Serena</td><td>內建 LSP，支援 30+ 語言符號查找與分析</td><td>符號定位、程式碼分析</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <div class="section-label">Skill vs Agent</div>
+  <h2>選哪個？</h2>
+  <table class="styled-table" style="margin-bottom: 20px;">
+    <thead><tr><th>維度</th><th>Skill</th><th>Agent</th></tr></thead>
+    <tbody>
+      <tr><td>目標</td><td>特定任務</td><td>專屬角色（人設）</td></tr>
+      <tr><td>System Prompt</td><td>預設設定</td><td>由 Agent 自定義</td></tr>
+      <tr><td>應用場景</td><td>單一可重複工作流</td><td>跨多種任務執行相同角色</td></tr>
+      <tr><td>最適情境</td><td>不常使用的工作流</td><td>打造持續性「人設」</td></tr>
+    </tbody>
+  </table>
+  <div class="tip">
+    <strong>Skill 最大陷阱：</strong>數量過多觸發衝突，類似 RAG 文件碰撞。50 份文件運作很好，800 份碰撞率高。Skill 越少越好，定期合併相似 Skill。
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">Git Worktree</div>
+  <h2>真正的平行開發</h2>
+  <p style="color: var(--text2); font-size: 14px; margin-bottom: 16px;">讓你從同一個 repository 建立多個獨立工作目錄，每個對應不同分支，搭配 Claude Code 實現真正平行開發。</p>
+  <div class="code-block">cd my-project && claude          # 主目錄正常開發
+
+# 開另一個終端，處理其他任務
+git worktree add ../my-project-fix-bug fix/login-bug
+cd ../my-project-fix-bug && claude</div>
+  <div class="card-grid" style="margin-top: 16px;">
+    <div class="card">
+      <h3>適用情境</h3>
+      <ul style="color: var(--text2); font-size: 14px; padding-left: 18px; line-height: 2;">
+        <li>主分支開發新功能同時修 bug</li>
+        <li>在獨立 worktree 中 Code Review PR</li>
+        <li>實驗性開發，失敗直接刪除</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>注意事項</h3>
+      <ul style="color: var(--text2); font-size: 14px; padding-left: 18px; line-height: 2;">
+        <li>每個 worktree 佔完整磁碟空間</li>
+        <li>不同 worktree 不能同時 checkout 同一分支</li>
+        <li>每個 session 有獨立 context，不互相干擾</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">Hooks</div>
+  <h2>自動化執行機制</h2>
+  <table class="styled-table">
+    <thead><tr><th>Hook 類型</th><th>觸發時機</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>PreToolUse</td><td>工具執行前</td><td>防止特定檔案被讀取或修改（如 .env）</td></tr>
+      <tr><td>PostToolUse</td><td>工具執行後</td><td>執行格式化工具、linter、logger</td></tr>
+      <tr><td>Stop</td><td>Claude 嘗試完成時</td><td>加驗證器，強制通過前無法停止</td></tr>
+    </tbody>
+  </table>
+  <div class="tip" style="margin-top: 16px;">
+    <strong>Stop Hook + Verifier 威力：</strong>5 步驟 × 80% 可靠度 = 33% 整體成功率。加上 Verifier 重試機制 → 99% 成功率（4 次嘗試）。
+  </div>
+</section>
+
+<!-- ==================== MEETUP ==================== -->
+<section class="section" id="meetup">
+  <div class="hero">
+    <div class="hero-label">Claude Code Meetup Taipei — 2026.04</div>
+    <h1>Meetup<br><em>實戰筆記</em></h1>
+    <p>David Chu & Jeffrey Lin 的演講重點整理，從混亂到系統化 Agent 架構的完整路徑。</p>
+  </div>
+
+  <div class="section-label">講者</div>
+  <div class="speaker-card">
+    <div class="avatar avatar-green">DC</div>
+    <div>
+      <div style="font-weight: 700; margin-bottom: 4px;">David Chu <span class="badge badge-green" style="margin-left: 8px;">前 ENS 團隊</span></div>
+      <div style="color: var(--text2); font-size: 14px;">從 100% Claude 生成程式碼的混亂實踐，到系統化的 CLAUDE.md 管理策略與 5 層 Agent 進化框架。</div>
+    </div>
+  </div>
+  <div class="speaker-card">
+    <div class="avatar avatar-blue">JL</div>
+    <div>
+      <div style="font-weight: 700; margin-bottom: 4px;">Jeffrey Lin <span class="badge badge-blue" style="margin-left: 8px;">ABConvert 創辦人</span></div>
+      <div style="color: var(--text2); font-size: 14px;">年收超過 100 萬美金的 Shopify A/B 測試應用，從自學開發者到多 Agent 架構的真實演進歷程。</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">David Chu — 5 層進化框架</div>
+  <h2>AI 代理進化路徑</h2>
+  <div class="level-track" style="margin-bottom: 36px;">
+    <div class="level-item reached">
+      <div class="level-dot">L1</div>
+      <div class="level-title">對話式（Conversational）</div>
+      <div class="level-desc">你輸入提示 → Claude 回應 → 你作出反應。最基礎的互動模式。</div>
+      <div class="level-tag">▲ 大多數人停留在此</div>
+    </div>
+    <div class="level-item reached">
+      <div class="level-dot">L2</div>
+      <div class="level-title">配置式（Configured）</div>
+      <div class="level-desc">CLAUDE.md 引導行為，記憶保留學習成果。開始積累知識。</div>
+      <div class="level-tag">▲ 大多數人停留在此</div>
+    </div>
+    <div class="level-item partial">
+      <div class="level-dot">L3</div>
+      <div class="level-title">自動化（Automated）⭐</div>
+      <div class="level-desc">Hooks 強制執行規則 + Skills 將工作流程編碼。自動執行常見工作流，減少重複提示。</div>
+      <div class="level-tag">▲ 第一個進階目標</div>
+    </div>
+    <div class="level-item">
+      <div class="level-dot">L4</div>
+      <div class="level-title">編排式（Orchestrated）⭐</div>
+      <div class="level-desc">自訂 Agents 具備特定角色、工具與記憶。多個 Agent 協同工作，角色分工明確。</div>
+      <div class="level-tag">▲ 進階目標</div>
+    </div>
+    <div class="level-item">
+      <div class="level-dot">L5</div>
+      <div class="level-title">自主式（Autonomous）</div>
+      <div class="level-desc">Agent 團隊獨立運作並相互驗證成果。大多數企業目前還不可達。</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section-label">Jeffrey Lin — ABConvert 案例</div>
+  <h2>實績數據</h2>
+  <div class="stat-row">
+    <div class="stat-card">
+      <div class="stat-num">2K+</div>
+      <div class="stat-label">用戶數</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">$1M+</div>
+      <div class="stat-label">年營收</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">2.5x</div>
+      <div class="stat-label">上季 PR = 過去 2.5 年總和</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top: 32px;">4 層技術架構</div>
+  <div class="arch">
+    <div class="arch-layer">
+      <div class="arch-num" style="background: var(--tip-bg); color: var(--accent); border: 1px solid var(--border);">4</div>
+      <div class="arch-content">
+        <div class="arch-title">編排層（Orchestration Layer）</div>
+        <div class="arch-sub">原則 & 協調：n8n、Linear、OpenClaw</div>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-num" style="background: var(--tip-bg); color: var(--accent2); border: 1px solid var(--tip-border);">3</div>
+      <div class="arch-content">
+        <div class="arch-title">Context 層（Context Layer）</div>
+        <div class="arch-sub">策略內容：GitHub、Notion、Skills.md</div>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-num" style="background: rgba(184,115,51,0.1); color: var(--accent3); border: 1px solid rgba(184,115,51,0.2);">2</div>
+      <div class="arch-content">
+        <div class="arch-title">資料層（Data Layer）</div>
+        <div class="arch-sub">信息來源：PostHog、Intercom、MongoDB、Google Cloud</div>
+      </div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-num" style="background: rgba(192,57,43,0.08); color: var(--accent4); border: 1px solid rgba(192,57,43,0.18);">1</div>
+      <div class="arch-content">
+        <div class="arch-title">執行層（Execution Layer）</div>
+        <div class="arch-sub">構建交付：Claude Code、GitHub Actions、Cron、腳本</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top: 32px;">4 大 Agent 角色</div>
+  <table class="styled-table">
+    <thead><tr><th>Agent</th><th>職責</th><th>輸入源</th><th>運作模式</th></tr></thead>
+    <tbody>
+      <tr><td>SRE Agent</td><td>監控日誌、推送修復</td><td>應用日誌</td><td><span class="badge badge-red">24/7 持續</span></td></tr>
+      <tr><td>技術支援 Agent</td><td>抓取對話、問題排查</td><td>Intercom</td><td><span class="badge badge-orange">按需觸發</span></td></tr>
+      <tr><td>產品工程 Agent</td><td>接收工單、交付功能</td><td>Linear</td><td><span class="badge badge-blue">按優先級</span></td></tr>
+      <tr><td>知識 Agent</td><td>回答內部問題、數據提取</td><td>Slack/PostHog</td><td><span class="badge badge-green">常駐 Slack</span></td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider">
+
+  <div class="section-label">核心結論</div>
+  <h2>兩位講者的共同洞察</h2>
+  <div class="quote">
+    <p>工具成長來自實際摩擦，不是提前優化。基礎決定上限——基礎差，AI 也無法放大優勢。</p>
+  </div>
+  <div class="card-grid" style="margin-top: 20px;">
+    <div class="card">
+      <h3>David 的路徑</h3>
+      <div class="code-block" style="font-size: 12px; margin-top: 8px;">遇到問題
+→ 加規則到 CLAUDE.md
+→ 不遵守
+→ 升級為 Hook/Skill/Agent</div>
+    </div>
+    <div class="card">
+      <h3>Jeffrey 的路徑</h3>
+      <div class="code-block" style="font-size: 12px; margin-top: 8px;">清理代碼
+→ 建立 context
+→ 試驗 agents
+→ 測量改善 → 持續委派</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CHECKLIST ==================== -->
+<section class="section" id="checklist">
+  <div class="hero">
+    <div class="hero-label">實踐清單</div>
+    <h1>你的<em> Claude Code</em><br>導入路徑</h1>
+    <p>點擊項目標記完成，追蹤你的導入進度。</p>
+  </div>
+
+  <div id="progressBar" style="background: var(--bg3); border-radius: 99px; height: 6px; margin-bottom: 8px; overflow: hidden;">
+    <div id="progressFill" style="height: 100%; background: var(--accent); border-radius: 99px; width: 0%; transition: width 0.3s;"></div>
+  </div>
+  <div id="progressText" style="font-family: var(--mono); font-size: 12px; color: var(--text3); margin-bottom: 32px;">0 / 10 完成</div>
+
+  <div class="section-label">基礎建設</div>
+  <ul class="checklist" id="checklist1">
+    <li onclick="toggle(this)"><div class="check-box"></div><span>建立初版 CLAUDE.md（~50 行）</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>設置 Stop hook + verifier</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>建立 CI/CD 與程式碼審查流程</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>定義可衡量的產出指標（聚焦產出，不聚焦投入）</span></li>
+  </ul>
+
+  <div class="section-label" style="margin-top: 28px;">進階自動化</div>
+  <ul class="checklist" id="checklist2">
+    <li onclick="toggle(this)"><div class="check-box"></div><span>識別可拆分為 Skill 的工作流</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>設計首個自訂 Agent</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>每週檢查 CLAUDE.md 遵守率</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>根據信號逐步升級規則（Rule → Hook/Skill/Agent）</span></li>
+  </ul>
+
+  <div class="section-label" style="margin-top: 28px;">團隊建立</div>
+  <ul class="checklist" id="checklist3">
+    <li onclick="toggle(this)"><div class="check-box"></div><span>教導團隊成員撰寫好的提示詞</span></li>
+    <li onclick="toggle(this)"><div class="check-box"></div><span>用 agents 解決真實任務建立信任</span></li>
+  </ul>
+
+  <div style="margin-top: 40px; padding: 24px; background: var(--bg2); border-radius: var(--radius-lg); border: 1px solid var(--border); text-align: center;">
+    <div style="font-size: 13px; color: var(--text3); margin-bottom: 8px; font-family: var(--mono);">延伸資源</div>
+    <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+      <a href="https://docs.anthropic.com/en/docs/claude-code/overview" target="_blank" style="color: var(--accent2); font-size: 14px; text-decoration: none;">官方文件 →</a>
+      <a href="https://kaochenlong.com/openspec" target="_blank" style="color: var(--accent2); font-size: 14px; text-decoration: none;">OpenSpec 1.0.0 →</a>
+      <a href="https://kaochenlong.com/ai-superpowers-skills" target="_blank" style="color: var(--accent2); font-size: 14px; text-decoration: none;">AI Superpowers →</a>
+    </div>
+  </div>
+</section>
+
+</div><!-- /main -->
+
+<script>
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setTheme(mode) {
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+  document.getElementById('seg-light').classList.toggle('active', mode === 'light');
+  document.getElementById('seg-dark').classList.toggle('active', mode === 'dark');
+  localStorage.setItem('theme', mode);
+}
+
+// 初始化：優先讀 localStorage，再 fallback 到系統偏好
+(function() {
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const mode = saved || (prefersDark ? 'dark' : 'light');
+  if (mode === 'dark') {
+    document.documentElement.classList.add('dark');
+    document.getElementById('seg-light').classList.remove('active');
+    document.getElementById('seg-dark').classList.add('active');
+  }
+})();
+
+function toggle(li) {
+  li.classList.toggle('done');
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = document.querySelectorAll('.checklist li').length;
+  const done = document.querySelectorAll('.checklist li.done').length;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = done + ' / ' + total + ' 完成';
+}
+</script>
+</body>
+</html>
